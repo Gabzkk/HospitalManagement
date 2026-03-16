@@ -1,0 +1,11 @@
+{
+  "name": "hospital-management",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "sh -c 'npm run dev:backend & npm run dev:frontend & wait'",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "start:backend": "npm --prefix backend run start"
+  }
+}

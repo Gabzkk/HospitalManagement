@@ -1,0 +1,52 @@
+HOSPITAL MANAGEMENT SYSTEM (MEDICORE) - PROJECT SUMMARY
+======================================================
+
+1. WHAT IS IT AND HOW DOES IT WORK?
+This is a full-stack, role-based Hospital Management application named "MediCore." 
+It allows different types of users (Admins, Doctors, and Staff) to log in and manage hospital operations.
+
+The workflow is straightforward:
+- The user logs in securely using their credentials.
+- The React Frontend sends these credentials to the Backend API.
+- If valid, the backend replies with a secure "JWT Token" that the frontend uses for all future requests to prove the user is logged in.
+- The user is then presented with a comprehensive Dashboard featuring KPI statistics, patient charts, and schedules. 
+- Depending on the user's role, they can navigate via the sidebar to manage Patients, Appointments, Medical Records, Staff, Doctors, and Billing.
+- Every time a user adds a patient, schedules an appointment, or views statistics, the Frontend requests this data from the Node.js Backend, which pulls or updates the records securely in the PostgreSQL database.
+
+2. WHAT WAS IT MADE WITH (TECH STACK)?
+The project is built entirely using JavaScript/Node.js ecosystem, split into two main parts:
+
+FRONTEND (User Interface):
+- Language: JavaScript (JSX)
+- Core Library: React 19 (built using Vite for fast compilation)
+- Styling: Tailwind CSS (for modern, responsive design without writing custom CSS files)
+- Charts & Visuals: Recharts (for the patient statistics line charts and donut charts)
+- Routing: React Router (for navigating between pages like /dashboard, /patients)
+- Icons: Lucide React
+- Form Handling: React Hook Form & Zod (for validation)
+- API Client: Axios (for fetching data from the backend)
+
+BACKEND (Server & Database):
+- Language: JavaScript (Node.js)
+- Framework: Express.js (for creating the REST API endpoints)
+- Database: PostgreSQL (a robust relational database)
+- Database ORM: Prisma (a tool that makes it easy to write database queries using JavaScript objects instead of raw SQL)
+- Security & Authentication: JSON Web Tokens (JWT) for session management and base bcryptjs for encrypting passwords.
+
+3. GRAPHICAL USER INTERFACE (GUI) & DESIGN
+The application features a modern, clean, and responsive interface designed with a "Forest Green" primary color scheme.
+
+Core Layout (AppShell):
+- Left Sidebar (Desktop): A fixed navigation pane for accessing different sections (Dashboard, Patients, Appointments, etc.). It displays the hospital branding, navigation links grouped by category, and the logged-in user's profile information. It is collapsible on mobile devices.
+- Top Navigation Bar: A sticky header containing a global search input, a quick "Add patient" action button, notification bell, and user avatar.
+- Main Content Area: A scrollable section that renders the active page's content, utilizing a soft blue-gray background to make white content cards stand out.
+
+Key UI Components:
+- Dashboard: The central hub featuring a greeting, real-time KPI cards (total patients, appointments, revenue), a dynamic patient statistics line chart (Recharts), and a right-aligned side panel showing a mini-calendar, upcoming appointments, and recent patients. It also includes a revenue donut chart and a recent reports feed.
+- Common Components: The UI relies heavily on highly reusable, custom-built components styled with Tailwind CSS, such as:
+  - Cards: Used to encapsulate varied content like statistics and forms, featuring subtle drop shadows and hover effects.
+  - Buttons & Badges: Multiple variants (primary, secondary, success, outline) to denote different states and actions.
+  - Toast Notifications: Animated alerts that appear in the top right to provide feedback on user actions (success, error).
+  - Modals: Accessible dialog boxes used for confirmations (e.g., deleting a record) and displaying forms over the main content.
+  - Tables & Pagination: Responsive components used extensively on the /patients, /staff, and /doctors pages to display data clearly.
+  - Form Elements (Input, Select): Standardized form controls utilizing React Hook Form for handling and Zod for schema validation, ensuring consistent error states and accessibility.

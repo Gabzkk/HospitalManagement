@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  NURSE
+  HR
+  SECRETARY
+  CASHIER
+  STAFF
+}
+
+enum AppointmentStatus {
+  scheduled
+  completed
+  cancelled
+  no_show
+}
+
+enum PaymentStatus {
+  unpaid
+  partial
+  paid
+}
+
+enum BillItemType {
+  consultation
+  lab
+  procedure
+  medicine
+  other
+}
+
+model User {
+  userId        Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String
+  role          Role
+
+  // Link the account to either a doctor or staff profile (optional for ADMIN).
+  linkedDoctorId Int?
+  linkedStaffId  Int?
+
+  linkedDoctor  Doctor?  @relation(fields: [linkedDoctorId], references: [doctorId], onDelete: SetNull)
+  linkedStaff   Staff?   @relation(fields: [linkedStaffId], references: [staffId], onDelete: SetNull)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([role])
+}
+
+model Patient {
+  patientId    Int      @id @default(autoincrement())
+  patientName  String
+  address      String?
+  phone        String?
+  email        String?  @unique
+  gender       String?
+  age          Int?
+
+  appointments Appointment[]
+  bills        Bill[]
+  vitals       Vital[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([patientName])
+}
+
+model Doctor {
+  doctorId        Int      @id @default(autoincrement())
+  name            String
+  department      String?
+  specialization  String?
+  phone           String?
+  email           String?  @unique
+
+  appointments    Appointment[]
+  users           User[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([department])
+  @@index([specialization])
+  @@index([name])
+}
+
+model Staff {
+  staffId         Int      @id @default(autoincrement())
+  name            String
+  address         String?
+  phone           String?
+  email           String?  @unique
+  department      String?
+  specialization  String?
+
+  shifts          StaffShift[]
+  users           User[]
+  attendance      Attendance[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([department])
+  @@index([name])
+}
+
+model StaffShift {
+  shiftId    Int      @id @default(autoincrement())
+  staffId    Int
+  loginTime  DateTime
+  logoutTime DateTime?
+
+  staff      Staff    @relation(fields: [staffId], references: [staffId], onDelete: Cascade)
+
+  @@index([staffId, loginTime])
+}
+
+model Appointment {
+  appointmentId      Int               @id @default(autoincrement())
+  patientId          Int
+  doctorId           Int
+  appointmentDateTime DateTime
+  department         String?
+  status             AppointmentStatus @default(scheduled)
+
+  patient            Patient           @relation(fields: [patientId], references: [patientId], onDelete: Restrict)
+  doctor             Doctor            @relation(fields: [doctorId], references: [doctorId], onDelete: Restrict)
+
+  // Normalized medical record: tie records to appointment only.
+  // Patient & Doctor for the record are derived through the Appointment relation.
+  medicalRecord      MedicalRecord?
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  // Prevent double-booking: one doctor cannot have two appointments at the same exact date/time.
+  @@unique([doctorId, appointmentDateTime])
+
+  @@index([patientId, appointmentDateTime])
+  @@index([doctorId, appointmentDateTime])
+  @@index([status])
+}
+
+model MedicalRecord {
+  recordId       Int      @id @default(autoincrement())
+  appointmentId  Int      @unique
+
+  diagnosis      String?
+  treatment      String?
+  plan           String?
+  medication     String?
+
+  // If you need to store payment at record level:
+  amountPaid     Decimal  @default(0.00) @db.Decimal(12, 2)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  appointment    Appointment @relation(fields: [appointmentId], references: [appointmentId], onDelete: Cascade)
+}
+
+model Bill {
+  billingId      Int          @id @default(autoincrement())
+  patientId      Int
+  department     String?
+
+  totalAmount    Decimal      @default(0.00) @db.Decimal(12, 2)
+  amountPaid     Decimal      @default(0.00) @db.Decimal(12, 2)
+  paymentStatus  PaymentStatus @default(unpaid)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  patient        Patient      @relation(fields: [patientId], references: [patientId], onDelete: Restrict)
+  items          BillItem[]
+
+  @@index([patientId, createdAt])
+  @@index([paymentStatus])
+}
+
+model BillItem {
+  itemId      Int        @id @default(autoincrement())
+  billingId   Int
+  itemType    BillItemType @default(other)
+  description String?
+  amount      Decimal    @db.Decimal(12, 2)
+
+  bill        Bill       @relation(fields: [billingId], references: [billingId], onDelete: Cascade)
+
+  @@index([billingId])
+}
+
+model Vital {
+  vitalId        Int      @id @default(autoincrement())
+  patientId      Int
+  temperature    Decimal? @db.Decimal(4, 1)
+  bloodPressure  String?
+  heartRate      Int?
+  oxygenLevel    Int?
+  recordedAt     DateTime @default(now())
+  recordedBy     String?
+
+  patient        Patient  @relation(fields: [patientId], references: [patientId], onDelete: Cascade)
+
+  @@index([patientId, recordedAt])
+}
+
+enum AttendanceStatus {
+  Present
+  Absent
+  Leave
+  Off
+}
+
+model Attendance {
+  attendanceId   Int              @id @default(autoincrement())
+  staffId        Int
+  date           DateTime         @db.Date
+  status         AttendanceStatus @default(Present)
+  notes          String?
+  recordedBy     String?
+
+  staff          Staff            @relation(fields: [staffId], references: [staffId], onDelete: Cascade)
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([staffId, date])
+  @@index([staffId, date])
+}
